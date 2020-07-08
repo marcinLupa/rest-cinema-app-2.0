@@ -6,10 +6,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
+import java.util.Set;
 
 @SuperBuilder
 @NoArgsConstructor
@@ -26,4 +24,7 @@ public class User {
     private Long id;
     private String username;
     private String password;
+
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "userId")
+    private Set<Ticket> tickets;
 }

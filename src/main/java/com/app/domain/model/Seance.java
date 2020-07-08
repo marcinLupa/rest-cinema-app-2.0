@@ -6,12 +6,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @SuperBuilder
 @NoArgsConstructor
@@ -27,7 +25,15 @@ public class Seance {
     @GeneratedValue
     private Long id;
 
-    private Movie movie;
-    private CinemaRoom cinemaRoom;
+
     private LocalDateTime seanceDate;
+
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "seanceId")
+    private Set<Ticket> tickets;
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "seanceId")
+    private Set<SeatSeance> seatSeances;
+    @ManyToOne(cascade = CascadeType.PERSIST)
+    private Movie movie;
+    @ManyToOne(cascade = CascadeType.PERSIST)
+    private CinemaRoom cinemaRoom;
 }

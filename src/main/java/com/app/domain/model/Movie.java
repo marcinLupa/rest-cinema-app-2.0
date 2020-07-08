@@ -7,12 +7,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @SuperBuilder
 @NoArgsConstructor
@@ -32,4 +30,6 @@ public class Movie {
     private LocalDate startEmissionTime;
     private LocalDate stopEmissionTime;
 
+    @OneToMany(cascade = CascadeType.PERSIST,mappedBy = "movie")
+    private Set<Seance> seance;
 }

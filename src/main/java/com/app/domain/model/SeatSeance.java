@@ -7,10 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 @SuperBuilder
 @NoArgsConstructor
@@ -25,7 +22,12 @@ public class SeatSeance {
     @Id
     @GeneratedValue
     private Long id;
-    private Seat seatId;
-    private Seance seanceId;
     private State state;
+    @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "seat_id")
+    private Seat seatId;
+    @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "seance_id")
+    private Seance seanceId;
+
 }
