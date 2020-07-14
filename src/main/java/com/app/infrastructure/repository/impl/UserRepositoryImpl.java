@@ -24,7 +24,7 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
-    public Optional<User> save(User user) {
+    public Optional<User> saveOrUpdate(User user) {
         return Optional.of(jpaUserRepository.save(user));
     }
 

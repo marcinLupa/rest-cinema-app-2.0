@@ -2,6 +2,7 @@ package com.app.application.service;
 
 import com.app.application.dto.RegisterUserDto;
 import com.app.domain.model.User;
+import com.app.domain.model.VerificationToken;
 import com.app.domain.repository.repositories.RoleRepository;
 import com.app.domain.repository.repositories.UserRepository;
 import com.app.domain.repository.repositories.VerificationTokenRepository;
@@ -20,8 +21,10 @@ public class SecurityService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
-//    private final EmailService emailService;
+    private final EmailService emailService;
     private final VerificationTokenRepository verificationTokenRepository;
+
+
     public Long register(RegisterUserDto registerUserDto) {
 
         if (Objects.isNull(registerUserDto)) {
@@ -91,6 +94,10 @@ public class SecurityService {
                 .orElseThrow(() -> new SecurityServiceException("cannot get verification token object"))
                 .getUser();
         user.setActivated(true);
+
+        userRepository
+                .saveOrUpdate(user);
+
         return user.getId();
     }
 

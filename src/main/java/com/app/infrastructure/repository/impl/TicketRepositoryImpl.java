@@ -25,7 +25,7 @@ public class TicketRepositoryImpl implements TicketRepository {
     }
 
     @Override
-    public Optional<Ticket> save(Ticket ticket) {
+    public Optional<Ticket> saveOrUpdate(Ticket ticket) {
         return Optional.of(jpaTicketRepository.save(ticket));
     }
 

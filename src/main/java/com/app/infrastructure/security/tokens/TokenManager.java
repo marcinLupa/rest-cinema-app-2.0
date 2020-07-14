@@ -24,6 +24,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class TokenManager {
+    private final SecretKey secretKey;
+    private final UserRepository userRepository;
 
     @Value("${security.tokens.access-token.expiration-time}")
     private Long accessTokenExpirationTime;
@@ -37,23 +39,17 @@ public class TokenManager {
     @Value("${security.tokens.token.prefix}")
     private String tokenPrefix;
 
-    private final UserRepository userRepository;
-    private final SecretKey secretKey;
+    // @Value(" security.tokens.token.header=Authorization")
 
-    // ---------------------------------------------------------------------
-    // generowanie tokenow na podstawie obiektu authentication
     public TokensDto generateTokens(Authentication authentication) {
-
-        if (authentication == null) {
-            throw new TokensException("authentication object is null");
+        if (Objects.isNull(authentication)) {
+            throw new TokensException("AUTHENTICATION OBJECT IS NULL");
         }
-
         User user = userRepository
                 .findByUsername(authentication.getName())
-                .orElseThrow(() -> new TokensException("cannot find user with username"));
-
+                .orElseThrow(() -> new SecurityException("CANNOT FIND USER"));
         Long accessTokenExpirationTimeInMillis = System.currentTimeMillis() + accessTokenExpirationTime;
-        Date accessTokenExpirationDate = new Date(accessTokenExpirationTimeInMillis);
+        Date accessTokenExpirationDate = new Date(System.currentTimeMillis() + accessTokenExpirationTime);
         Date refreshTokenExpirationDate = new Date(System.currentTimeMillis() + refreshTokenExpirationTime);
         Date creationDate = new Date();
 
@@ -63,13 +59,12 @@ public class TokenManager {
                 .setIssuedAt(creationDate)
                 .signWith(secretKey)
                 .compact();
-
         String refreshToken = Jwts.builder()
                 .setSubject(String.valueOf(user.getId()))
                 .setExpiration(refreshTokenExpirationDate)
                 .setIssuedAt(creationDate)
-                .claim(accessTokenExpirationTimeProperty, accessTokenExpirationTimeInMillis)
                 .signWith(secretKey)
+                .claim(accessTokenExpirationTimeProperty, accessTokenExpirationTimeInMillis)
                 .compact();
 
         return TokensDto.builder()
@@ -78,7 +73,7 @@ public class TokenManager {
                 .build();
     }
 
-    // parsowanie tokenow
+    //parsowanie
     public UsernamePasswordAuthenticationToken parse(String token) {
 
         if (Objects.isNull(token)) {
@@ -109,6 +104,7 @@ public class TokenManager {
                         .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
                         .collect(Collectors.toList()));
     }
+
     public TokensDto parseFromRefreshToken(RefreshTokenDto refreshTokenDto) {
 
         String refreshToken = refreshTokenDto.getToken();
@@ -159,7 +155,6 @@ public class TokenManager {
     }
 
     private Claims getClaims(String token) {
-
         if (token == null) {
             throw new TokensException("token is null");
         }
@@ -176,11 +171,11 @@ public class TokenManager {
         return Long.parseLong(getClaims(token).getSubject());
     }
 
-    private Date getExpiration(String token) {
-        return getClaims(token).getExpiration();
-    }
-
     private boolean isTokenValid(String token) {
         return getClaims(token).getExpiration().after(new Date());
+    }
+
+    private Date getExpiration(String token) {
+        return getClaims(token).getExpiration();
     }
 }

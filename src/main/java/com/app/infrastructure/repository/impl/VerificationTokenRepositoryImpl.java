@@ -16,7 +16,7 @@ public class VerificationTokenRepositoryImpl implements VerificationTokenReposit
     private final JpaVerificationTokenRepository jpaVerificationTokenRepository;
 
     @Override
-    public Optional<VerificationToken> save(VerificationToken verificationToken) {
+    public Optional<VerificationToken> saveOrUpdate(VerificationToken verificationToken) {
         return Optional.of(jpaVerificationTokenRepository.save(verificationToken));
     }
 

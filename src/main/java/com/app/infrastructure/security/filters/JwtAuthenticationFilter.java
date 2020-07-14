@@ -26,13 +26,9 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     public JwtAuthenticationFilter(AuthenticationManager authenticationManager, TokenManager tokenManager) {
         this.authenticationManager = authenticationManager;
 
-        // domyslnie masz metode POST /login
-        // ale mozesz ja zmienic
-        // setRequiresAuthenticationRequestMatcher(new AntPathRequestMatcher("/my-login", "POST"));
         this.tokenManager = tokenManager;
     }
 
-    // kiedy wywlasz POST /login wykona sie ponizsza metoda
     @Override
     public Authentication attemptAuthentication(
             HttpServletRequest request,
@@ -51,7 +47,6 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         }
     }
 
-    // kiedy logowanie w powyzszej metodzie sie powiodlo to wykona sie metoda ponizej
     @Override
     protected void successfulAuthentication(
             HttpServletRequest request,
@@ -59,7 +54,6 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             FilterChain chain,
             Authentication authResult) throws IOException, ServletException {
 
-        // authResult zawiera obiekt zalogowanego usera
         TokensDto tokensDto = tokenManager.generateTokens(authResult);
 
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);

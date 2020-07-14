@@ -31,7 +31,7 @@ private final JpaRoleRepository jpaRoleRepository;
     }
 
     @Override
-    public Optional<Role> save(Role role) {
+    public Optional<Role> saveOrUpdate(Role role) {
         return Optional.of(jpaRoleRepository.save(role));
     }
 

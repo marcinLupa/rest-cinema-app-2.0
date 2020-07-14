@@ -27,7 +27,7 @@ public class CinemaRoomRepositoryImpl implements CinemaRoomRepository {
     }
 
     @Override
-    public Optional<CinemaRoom> save(CinemaRoom cinemaRoom) {
+    public Optional<CinemaRoom> saveOrUpdate(CinemaRoom cinemaRoom) {
         return Optional.of(jpaCinemaRoomRepository.save(cinemaRoom));
     }
 

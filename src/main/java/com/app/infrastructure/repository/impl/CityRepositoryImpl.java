@@ -25,7 +25,7 @@ public class CityRepositoryImpl implements CityRepository {
     }
 
     @Override
-    public Optional<City> save(City city) {
+    public Optional<City> saveOrUpdate(City city) {
         return Optional.of(jpaCityRepository.save(city));
     }
 

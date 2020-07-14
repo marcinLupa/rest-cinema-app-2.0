@@ -26,7 +26,7 @@ public class CinemaRepositoryImpl implements CinemaRepository {
     }
 
     @Override
-    public Optional<Cinema> save(Cinema cinema) {
+    public Optional<Cinema> saveOrUpdate(Cinema cinema) {
         return Optional.of(jpaCinemaRepository.save(cinema));
     }
 

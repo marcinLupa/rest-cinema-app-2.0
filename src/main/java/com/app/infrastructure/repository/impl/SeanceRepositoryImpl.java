@@ -26,7 +26,7 @@ public class SeanceRepositoryImpl implements SeanceRepository {
     }
 
     @Override
-    public Optional<Seance> save(Seance seance) {
+    public Optional<Seance> saveOrUpdate(Seance seance) {
         return Optional.of(jpaSeanceRepository.save(seance));
     }
 

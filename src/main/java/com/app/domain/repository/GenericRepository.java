@@ -6,6 +6,6 @@ import java.util.Optional;
 public interface GenericRepository<T,ID> {
     Optional<T> findOneById(ID id);
     List<T> findAll();
-    Optional<T> save(T t);
+    Optional<T> saveOrUpdate(T t);
     ID deleteById(ID id);
 }

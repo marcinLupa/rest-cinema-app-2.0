@@ -24,7 +24,7 @@ public class SeatSeanceRepositoryImpl implements SeatSeanceRepository {
     }
 
     @Override
-    public Optional<SeatSeance> save(SeatSeance seatSeance) {
+    public Optional<SeatSeance> saveOrUpdate(SeatSeance seatSeance) {
         return Optional.of(jpaSeatSeanceRepository.save(seatSeance));
     }
 

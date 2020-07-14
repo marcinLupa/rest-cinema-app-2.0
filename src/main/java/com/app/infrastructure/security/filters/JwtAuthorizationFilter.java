@@ -16,7 +16,7 @@ import java.util.Objects;
 
 public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
 
-    private AuthenticationManager authenticationManager;
+   // private AuthenticationManager authenticationManager;
     private TokenManager tokenManager;
 
     public JwtAuthorizationFilter(AuthenticationManager authenticationManager, TokenManager tokenManager) {
