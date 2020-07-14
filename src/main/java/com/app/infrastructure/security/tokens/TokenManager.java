@@ -1,0 +1,186 @@
+package com.app.infrastructure.security.tokens;
+
+
+
+import com.app.domain.model.User;
+import com.app.domain.repository.repositories.UserRepository;
+import com.app.infrastructure.dto.RefreshTokenDto;
+import com.app.infrastructure.dto.TokensDto;
+import com.app.infrastructure.security.exceptions.TokensException;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.stereotype.Service;
+
+import javax.crypto.SecretKey;
+import java.util.Date;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class TokenManager {
+
+    @Value("${security.tokens.access-token.expiration-time}")
+    private Long accessTokenExpirationTime;
+
+    @Value("${security.tokens.refresh-token.expiration-time}")
+    private Long refreshTokenExpirationTime;
+
+    @Value("${security.tokens.refresh-token.access-token-expiration-time}")
+    private String accessTokenExpirationTimeProperty;
+
+    @Value("${security.tokens.token.prefix}")
+    private String tokenPrefix;
+
+    private final UserRepository userRepository;
+    private final SecretKey secretKey;
+
+    // ---------------------------------------------------------------------
+    // generowanie tokenow na podstawie obiektu authentication
+    public TokensDto generateTokens(Authentication authentication) {
+
+        if (authentication == null) {
+            throw new TokensException("authentication object is null");
+        }
+
+        User user = userRepository
+                .findByUsername(authentication.getName())
+                .orElseThrow(() -> new TokensException("cannot find user with username"));
+
+        Long accessTokenExpirationTimeInMillis = System.currentTimeMillis() + accessTokenExpirationTime;
+        Date accessTokenExpirationDate = new Date(accessTokenExpirationTimeInMillis);
+        Date refreshTokenExpirationDate = new Date(System.currentTimeMillis() + refreshTokenExpirationTime);
+        Date creationDate = new Date();
+
+        String accessToken = Jwts.builder()
+                .setSubject(String.valueOf(user.getId()))
+                .setExpiration(accessTokenExpirationDate)
+                .setIssuedAt(creationDate)
+                .signWith(secretKey)
+                .compact();
+
+        String refreshToken = Jwts.builder()
+                .setSubject(String.valueOf(user.getId()))
+                .setExpiration(refreshTokenExpirationDate)
+                .setIssuedAt(creationDate)
+                .claim(accessTokenExpirationTimeProperty, accessTokenExpirationTimeInMillis)
+                .signWith(secretKey)
+                .compact();
+
+        return TokensDto.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
+    }
+
+    // parsowanie tokenow
+    public UsernamePasswordAuthenticationToken parse(String token) {
+
+        if (Objects.isNull(token)) {
+            throw new TokensException("token is null");
+        }
+
+        if (!token.startsWith(tokenPrefix)) {
+            throw new TokensException("token is not correct");
+        }
+
+        var accessToken = token.replace(tokenPrefix, "");
+
+        if (!isTokenValid(accessToken)) {
+            throw new TokensException("token is not valid");
+        }
+
+        Long id = getId(accessToken);
+        User user = userRepository
+                .findOneById(id)
+                .orElseThrow(() -> new TokensException("parse token - cannot find user"));
+
+        return new UsernamePasswordAuthenticationToken(
+                user.getUsername(),
+                null,
+                user
+                        .getRoles()
+                        .stream()
+                        .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
+                        .collect(Collectors.toList()));
+    }
+    public TokensDto parseFromRefreshToken(RefreshTokenDto refreshTokenDto) {
+
+        String refreshToken = refreshTokenDto.getToken();
+
+        if (Objects.isNull(refreshToken)) {
+            throw new TokensException("token is null");
+        }
+
+        if (!isTokenValid(refreshToken)) {
+            throw new TokensException("token is not valid");
+        }
+
+        Long accessTokenTimeMs = Long.parseLong(getClaims(refreshToken).get(accessTokenExpirationTimeProperty).toString());
+
+        if (accessTokenTimeMs < System.currentTimeMillis()) {
+            throw new TokensException("access token has been expired");
+        }
+
+        Long id = getId(refreshToken);
+        User user = userRepository
+                .findOneById(id)
+                .orElseThrow(() -> new TokensException("parse token - cannot find user"));
+
+        Long accessTokenExpirationTimeInMillis = System.currentTimeMillis() + accessTokenExpirationTime;
+        Date accessTokenExpirationDate = new Date(accessTokenExpirationTimeInMillis);
+        Date refreshTokenExpirationDate = getExpiration(refreshToken);
+        Date creationDate = new Date();
+
+        String accessToken = Jwts.builder()
+                .setSubject(String.valueOf(user.getId()))
+                .setExpiration(accessTokenExpirationDate)
+                .setIssuedAt(creationDate)
+                .signWith(secretKey)
+                .compact();
+
+        String newRefreshToken = Jwts.builder()
+                .setSubject(String.valueOf(user.getId()))
+                .setExpiration(refreshTokenExpirationDate)
+                .setIssuedAt(creationDate)
+                .claim(accessTokenExpirationTimeProperty, accessTokenExpirationTimeInMillis)
+                .signWith(secretKey)
+                .compact();
+
+        return TokensDto.builder()
+                .accessToken(accessToken)
+                .refreshToken(newRefreshToken)
+                .build();
+    }
+
+    private Claims getClaims(String token) {
+
+        if (token == null) {
+            throw new TokensException("token is null");
+        }
+
+        return Jwts
+                .parserBuilder()
+                .setSigningKey(secretKey)
+                .build()
+                .parseClaimsJws(token.replace(tokenPrefix, ""))
+                .getBody();
+    }
+
+    private Long getId(String token) {
+        return Long.parseLong(getClaims(token).getSubject());
+    }
+
+    private Date getExpiration(String token) {
+        return getClaims(token).getExpiration();
+    }
+
+    private boolean isTokenValid(String token) {
+        return getClaims(token).getExpiration().after(new Date());
+    }
+}
